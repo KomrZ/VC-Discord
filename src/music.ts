@@ -101,7 +101,7 @@ export class DiscordMusic {
   async playlists(value: unknown): Promise<any> { this.service = (value as any)?.service === "spotify" ? "spotify" : (value as any)?.service === "vk" ? "vk" : "yandex"; const result = await musicCall("discord_playlists", { service: this.service }); this.healthy(); return result; }
   async like(): Promise<string> {
     if (!this.following || !this.session || this.revision < 0 || this.recovering || this.transitioning) return "Сначала включите песню в Discord и дождитесь загрузки.";
-    if (this.bridgeVersion < 5) return "Для лайков обновите Astra Music до версии 1.1.8 и перезапустите оба плагина.";
+    if (this.bridgeVersion < 5) return "Для лайков обновите Astra Music до актуальной версии (не ниже 1.3.0) и перезапустите оба плагина.";
     const epoch = this.epoch;
     const result = await musicCall("discord_like", { session: this.session, revision: this.revision }, this.controller?.signal);
     if (epoch !== this.epoch || result.cancelled) return "Песня изменилась; повторите команду лайка.";
@@ -360,7 +360,7 @@ export class DiscordMusic {
       }
       if (epoch !== this.epoch || !this.following || (this.transitioning || this.recovering) && !transition) return;
       this.bridgeVersion = Number(track.bridge_version) || 0;
-      if (this.revision < 0 && this.bridgeVersion < 4) this.note("Для обновления ссылки при обрыве музыки обновите Astra Music до версии 1.1.7 или новее и перезапустите оба плагина.");
+      if (this.revision < 0 && this.bridgeVersion < 4) this.note("Для обновления ссылки при обрыве музыки обновите Astra Music до актуальной версии (не ниже 1.3.0) и перезапустите оба плагина.");
       if (!this.transport.connected) { this.stop(); return; }
       this.title = String(track.title || ""); this.artist = String(track.artist || "");
       this.service = track.service === "spotify" ? "spotify" : track.service === "vk" ? "vk" : "yandex";

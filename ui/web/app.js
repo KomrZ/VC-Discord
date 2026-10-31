@@ -263,6 +263,7 @@ function renderModeration(state) {
   $("moderationPending").textContent = (data.pending || []).map(p => "Аккаунт " + p.userId + ": " + p.action + (p.destination ? " → " + p.destination : "") + "; " + p.people.map(person => "№ " + person.number + " · " + person.name).join(", ") + ". " + (p.needsSelection ? "Скажите «выбери участника» и нужный номер" + (data.confirmationRequired ? ", затем подтвердите" : " — действие выполнится сразу") : "Подтвердите номер голосом") + " до " + new Date(p.expiresAt).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) + ".").join("\n") || "Нет ожидающих команд.";
 }
 $("copyModerators").onclick = () => { $("moderatorUserIds").value = $("allowedUserIds").value; markDirty(); };
+$("copyScreenUsers").onclick = () => { $("screenUserIds").value = $("allowedUserIds").value; markDirty(); };
 async function refresh() {
   if (polling || document.hidden) return; polling = true;
   try { render(await backend("state")); }

@@ -16,7 +16,7 @@ export interface Settings {
   bargeIn: boolean; silenceMs: number; maxUtteranceSecs: number;
   llmBaseUrl: string; llmApiKey: string; llmModel: string; llmUseAstra: boolean; llmProviderId: string; llmProviderKeys: Record<string, string>; llmKeyOrigin: string;
   llmUseAstraPersonality: boolean; llmPersonalityOrigin: string;
-  screenDisplay: string; screenVisionConfirmed: boolean; screenCloudConfirmed: boolean; screenCloudOrigin: string;
+  screenDisplay: string; screenVisionConfirmed: boolean; screenCloudConfirmed: boolean; screenCloudOrigin: string; screenUserIds: string[];
   sttEngine: "api" | "vosk" | "whisper" | "google"; sttBaseUrl: string; sttApiKey: string; sttModel: string;
   googleSpeechConfirmed: boolean; googleApiKey: string;
   whisperModelPath: string; whisperPython: string; sttUseAstra: boolean;
@@ -40,7 +40,7 @@ export const defaults: Settings = {
   bargeIn: true, silenceMs: 800, maxUtteranceSecs: 20,
   llmBaseUrl: "http://127.0.0.1:1234/v1", llmApiKey: "", llmModel: "", llmUseAstra: false, llmProviderId: "manual", llmProviderKeys: {}, llmKeyOrigin: "",
   llmUseAstraPersonality: true, llmPersonalityOrigin: "https://api.hubris.pw",
-  screenDisplay: "primary", screenVisionConfirmed: false, screenCloudConfirmed: false, screenCloudOrigin: "",
+  screenDisplay: "primary", screenVisionConfirmed: false, screenCloudConfirmed: false, screenCloudOrigin: "", screenUserIds: [],
   sttEngine: "api", sttBaseUrl: "https://api.openai.com/v1", sttApiKey: "", sttModel: "whisper-1",
   sttPython: "python", voskModelPath: "", language: "ru",
   whisperModelPath: "", whisperPython: "python", sttUseAstra: false,
@@ -62,11 +62,12 @@ export function ids(value: unknown): string[] {
 }
 export function normalizeSettings(value: unknown, base: Settings = defaults): Settings {
   const raw = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-  const result = { ...base, allowedUserIds: [...base.allowedUserIds], moderatorUserIds: [...base.moderatorUserIds], llmProviderKeys: { ...base.llmProviderKeys } };
+  const result = { ...base, allowedUserIds: [...base.allowedUserIds], moderatorUserIds: [...base.moderatorUserIds], screenUserIds: [...base.screenUserIds], llmProviderKeys: { ...base.llmProviderKeys } };
   for (const key of Object.keys(defaults) as (keyof Settings)[]) {
     if (!(key in raw)) continue;
     if (key === "allowedUserIds") { result.allowedUserIds = ids(raw[key]); continue; }
     if (key === "moderatorUserIds") { result.moderatorUserIds = ids(raw[key]); continue; }
+    if (key === "screenUserIds") { result.screenUserIds = ids(raw[key]); continue; }
     if (key === "llmProviderKeys") {
       const entries = raw[key];
       if (entries && typeof entries === "object" && !Array.isArray(entries)) result.llmProviderKeys = Object.fromEntries(Object.entries(entries).slice(0, 100).filter(([scope, key]) => scope.length <= 2048 && typeof key === "string" && key.length <= 8192));
@@ -98,7 +99,7 @@ export function normalizeSettings(value: unknown, base: Settings = defaults): Se
 }
 export function validateSettings(s: Settings): void {
   if (s.sttEngine === "google" && !s.googleSpeechConfirmed) throw new Error("Подтвердите отправку речи участников в Google во вкладке «Голос и модель».");
-  for (const id of [s.guildId, s.channelId, s.textChannelId, ...s.allowedUserIds, ...s.moderatorUserIds].filter(Boolean)) {
+  for (const id of [s.guildId, s.channelId, s.textChannelId, ...s.allowedUserIds, ...s.moderatorUserIds, ...s.screenUserIds].filter(Boolean)) {
     if (!/^\d{17,20}$/.test(id)) throw new Error("Discord ID должен содержать от 17 до 20 цифр. Укажите ID, а не ник.");
   }
   if (!s.commandPhrase || s.commandPhrase.length < 4) throw new Error("Укажите фразу для команд ПК, например «Астра выполни».");
@@ -169,6 +170,10 @@ export class SettingsStore {
       finally { decrypted.fill(0); }
     }
     const loaded = normalizeSettings({ ...raw.settings, ...plain });
+    // Older profiles had no separate screen list: keep showing the screen to
+    // everyone who already had PC access. An explicit (even empty) list wins.
+    const savedSettings = raw.settings && typeof raw.settings === "object" && !Array.isArray(raw.settings) ? raw.settings as Record<string, unknown> : {};
+    if (!("screenUserIds" in savedSettings)) loaded.screenUserIds = [...loaded.allowedUserIds];
     // Move only our own runtime paths after the user-requested project rename.
     // User models, the stable data folder, and encrypted keys stay in place.
     const oldRoot = "D:\\IT\\Astra\\discord-voice-bridge";

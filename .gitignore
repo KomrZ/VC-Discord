@@ -1,0 +1,17 @@
+# Build artifacts
+*.astraplugin
+
+node_modules/
+dist/
+test/artifact/
+.tmp-*/
+DESIGN.md
+VERIFICATION.md
+ICON_DESIGN.md
+.tmp-conformance-report.json
+*.log
+.runtime/
+data/
+.env
+.env.*
+preview-supertonic.wav

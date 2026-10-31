@@ -1,7 +1,7 @@
 [plugin]
 id = "vc-discord"
 name = "Voice communication-Discord"
-version = "1.4.5"
+version = "1.5.0"
 description = "Voice conversations, music and participant moderation in Discord; PC commands from the accounts you allow."
 author = "Voltur"
 license = "MIT"
